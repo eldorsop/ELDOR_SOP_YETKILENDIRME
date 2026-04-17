@@ -254,10 +254,10 @@
 
     <!-- QR Modal -->
     <div id="qrModal" class="fixed inset-0 bg-black/70 z-[9995] hidden items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center relative">
+        <div class="bg-white rounded-3xl max-sm w-full p-6 shadow-2xl text-center relative">
             <h3 class="text-lg font-bold mb-4" id="qrModalTitle">SOP Bilgisi</h3>
             <div id="qrcode" class="bg-white p-2 rounded-2xl border border-slate-100 inline-block mb-4"></div>
-            <p class="text-slate-400 text-xs mb-4 uppercase font-bold tracking-widest">Operatör Görüntüleme QR</p>
+            <p class="text-slate-400 text-xs mb-4 uppercase font-bold tracking-widest">Erişim Seçenekleri QR</p>
             <button onclick="get('qrModal').classList.add('hidden')" class="w-full py-3 bg-slate-200 text-slate-700 rounded-xl font-bold uppercase text-xs">Kapat</button>
         </div>
     </div>
@@ -288,20 +288,14 @@
             
             const params = new URLSearchParams(window.location.search);
             const viewParam = params.get('view'); 
-            const autoMode = params.get('auto');
 
             if (viewParam && !viewParam.startsWith('blob:')) {
                 pendingPath = viewParam; 
-                
-                // QR Yönlendirme Kontrolü: auto=view ise doğrudan operatör ekranına git
-                if (autoMode === 'view') {
-                    loadOperatorSop(pendingPath);
-                } else {
-                    get('gatewayScreen').style.display = 'flex';
-                    const parts = pendingPath.split('/');
-                    const projName = (parts.length > 2) ? parts[2] : "SOP";
-                    get('gatewayInfo').innerText = `"${projName}" dökümanı erişime hazır.`;
-                }
+                // Otomatik yönlendirme (auto=view) kaldırıldı, artık seçim ekranı açılacak
+                get('gatewayScreen').style.display = 'flex';
+                const parts = pendingPath.split('/');
+                const projName = (parts.length > 2) ? parts[2] : "SOP";
+                get('gatewayInfo').innerText = `"${projName}" dökümanı erişime hazır.`;
             } else {
                 const isAdmin = localStorage.getItem('isEldor') === 'true';
                 if (isAdmin) loginSuccess('admin', null);
@@ -337,14 +331,13 @@
 
             let currentAddr = window.location.href.split('?')[0];
             
-            // Link sonuna auto=view ekleyerek QR okutulduğunda doğrudan operatör moduna yönlendiriyoruz
-            const gatewayUrl = currentAddr.replace(/\/$/, '') + "?view=" + encodeURIComponent(path) + "&auto=view";
+            // Link sonundan auto=view parametresini kaldırıyoruz böylece seçim ekranına gider
+            const gatewayUrl = currentAddr.replace(/\/$/, '') + "?view=" + encodeURIComponent(path);
             
             const qrBox = get('qrcode'); 
             if (qrBox) {
                 qrBox.innerHTML = ''; 
                 try {
-                    // Overflow hatasını önlemek için Error Correction Level (M) olarak ayarlandı
                     new QRCode(qrBox, { 
                         text: gatewayUrl, 
                         width: 220, 
@@ -358,7 +351,6 @@
                     get('qrModal').classList.add('flex');
                 } catch (err) {
                     console.error("QR Error:", err);
-                    // Daha fazla kapasite için seviyeyi düşür (L)
                     qrBox.innerHTML = '';
                     new QRCode(qrBox, { 
                         text: gatewayUrl, 
